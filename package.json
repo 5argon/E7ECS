@@ -1,0 +1,7 @@
+{
+    "name": "com.e7.e7ecs",
+    "displayName": "E7ECS",
+    "version": "0.0.1",
+    "unity": "2018.1",
+    "description": "Lightweight reactive systems and cool stuffs built on top of Unity's regular ECS."
+}

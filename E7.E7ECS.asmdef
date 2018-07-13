@@ -1,0 +1,9 @@
+﻿{
+	"name": "E7.E7ECS",
+    "references": [
+        "Unity.Collections",
+        "Unity.Entities",
+        "Unity.Entities.Hybrid",
+        "Unity.Mathematics"
+    ]
+}
