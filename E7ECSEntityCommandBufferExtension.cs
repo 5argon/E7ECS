@@ -23,9 +23,9 @@ namespace E7.ECS
             na.Dispose();
         }
 
-        public static void UpsertComponent<T>(this EntityManager em, Entity entity) where T : struct, IComponentData => UpsertComponent<T>(em, entity, default(T));
+        public static void UpsertComponentData<T>(this EntityManager em, Entity entity) where T : struct, IComponentData => UpsertComponentData<T>(em, entity, default(T));
 
-        public static void UpsertComponent<T>(this EntityManager em, Entity entity, T tagContent) where T : struct, IComponentData
+        public static void UpsertComponentData<T>(this EntityManager em, Entity entity, T tagContent) where T : struct, IComponentData
         {
             if (em.HasComponent<T>(entity) == false)
             {

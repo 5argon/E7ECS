@@ -10,6 +10,37 @@ using System.Collections.Generic;
 
 namespace E7.ECS
 {
+    public static class AssertECS
+    {
+        public static EntityArray EntitiesOfArchetype(this World world, params ComponentType[] types)
+        {
+            var ai = world.GetOrCreateManager<AssertInjector>();
+            return ai.EntitiesOfArchetype(types);
+        }
+
+        public static bool HasEntityArchetype(this World world, params ComponentType[] types)
+        {
+            var ai = world.GetOrCreateManager<AssertInjector>();
+            return ai.Any(types);
+        }
+
+        [DisableAutoCreation]
+        public class AssertInjector : ComponentSystem
+        {
+            protected override void OnCreateManager(int capacity) => this.Enabled = false;
+            protected override void OnUpdate() { }
+
+            public bool Any(params ComponentType[] types) => EntitiesOfArchetype(types).Length != 0;
+
+            public EntityArray EntitiesOfArchetype(params ComponentType[] types)
+            {
+                var cg = GetComponentGroup(types);
+                return cg.GetEntityArray();
+            }
+
+        }
+    }
+
     /// <summary>
     /// `ReactiveJCS` has a different approach from `ReactiveCS`.
     /// Because you usually wants to bring all the stuffs to do together inside the job, use `GetReactions<T>`
@@ -104,7 +135,7 @@ namespace E7.ECS
         protected override void OnUpdate()
         {
             //There is a possibility that we have a mono entity but not any reactive entities in `ReactiveMonoCS`.
-            //Debug.Log(InjectedReactivesInGroup.Entities.Length);
+            //Debug.Log("REACTIVE LENGTH " + InjectedReactivesInGroup.Entities.Length);
             try
             {
                 OnOncePerAllReactions();

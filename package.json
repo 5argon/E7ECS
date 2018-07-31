@@ -1,5 +1,6 @@
 {
     "name": "com.e7.e7ecs",
+    "author": "Sirawat Pitaksarit (5argon) - Exceed7 Experiments",
     "displayName": "E7ECS",
     "version": "0.0.1",
     "unity": "2018.1",
