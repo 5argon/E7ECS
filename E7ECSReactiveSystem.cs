@@ -93,28 +93,21 @@ namespace E7.ECS
     {
         /// <summary>
         /// All entities created from `.Issue` has this shared component data, so they can be cleaned up together at the end frame.
+        /// Also `EntityManager.CreateReactiveArchetype` will get you an archetype with this.
         /// </summary>
         public struct ReactiveEntity : ISharedComponentData { }
 
-        // struct AllReactives
-        // {
-        //     [ReadOnly] public SharedComponentDataArray<ReactiveEntity> reactiveEntities;
-        //     [ReadOnly] public EntityArray entities;
-        // }
-        // [Inject] AllReactives allReactives;
-        private ComponentGroup allReactivesGroup;
-        protected override void OnCreateManager(int capacity)
+        struct AllReactives
         {
-            allReactivesGroup = GetComponentGroup(ComponentType.ReadOnly<ReactiveEntity>());
+            [ReadOnly] public SharedComponentDataArray<ReactiveEntity> reactiveEntities;
+            [ReadOnly] public EntityArray entities;
+            public readonly int GroupIndex;
         }
+        [Inject] AllReactives allReactives;
 
         protected override void OnUpdate()
         {
-            EntityManager.DestroyEntity(allReactivesGroup);
-            // for (int i = 0; i < allReactives.entities.Length; i++)
-            // {
-            //     PostUpdateCommands.DestroyEntity(allReactives.entities[i]);
-            // }
+            EntityManager.DestroyEntity(ComponentGroups[allReactives.GroupIndex]);
         }
     }
 
@@ -136,20 +129,20 @@ namespace E7.ECS
         {
             //There is a possibility that we have a mono entity but not any reactive entities in `ReactiveMonoCS`.
             //Debug.Log("REACTIVE LENGTH " + InjectedReactivesInGroup.Entities.Length);
-            try
-            {
+            // try
+            // {
                 OnOncePerAllReactions();
                 for (int i = 0; i < InjectedReactivesInGroup.Entities.Length; i++)
                 {
                     iteratingEntity = InjectedReactivesInGroup.Entities[i];
                     OnReaction();
                 }
-            }
-            catch (System.InvalidOperationException)
-            {
-                Debug.LogError("Did you use EntityManager and invalidate the injected array? Group : " + typeof(ReactiveGroup).Name);
-                throw;
-            }
+            // }
+            // catch (System.InvalidOperationException)
+            // {
+                // Debug.LogError("Did you use EntityManager and invalidate the injected array? Group : " + typeof(ReactiveGroup).Name);
+                // throw;
+            // }
         }
 
         private protected Entity iteratingEntity;

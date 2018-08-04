@@ -62,6 +62,17 @@ namespace E7.ECS
             }
         }
 
+        public static EntityArchetype CreateReactiveArchetype<ReactiveComponent, ReactiveGroup>(this EntityManager em) 
+        where ReactiveComponent : struct, IReactive
+        where ReactiveGroup : struct, IReactiveGroup
+        {
+            return em.CreateArchetype(
+                ComponentType.ReadOnly<ReactiveComponent>(),
+                ComponentType.ReadOnly<ReactiveGroup>(),
+                ComponentType.ReadOnly<DestroyReactivesSystem.ReactiveEntity>()
+            );
+        }
+
         /// <summary>
         /// Make a new entity just for carrying the reactive component.
         /// A system like `ReactiveCS`, `ReactiveMonoCS`, or `ReactiveJCS` can pick it up,
@@ -128,6 +139,25 @@ namespace E7.ECS
             ecb.AddSharedComponent<ReactiveGroup>(rg);
             //TODO : Create an archetype that has this because we always need this...
             ecb.AddSharedComponent<DestroyReactivesSystem.ReactiveEntity>(default);
+        }
+
+        /// <summary>
+        /// Please use archetype from EntityManager.CreateReactiveArchetype! The method has no check if you use any other incompatible archetype.
+        /// Creating will be faster but we still have to SetComponent once.
+        /// </summary>
+        public static void Issue<ReactiveComponent>(this EntityCommandBuffer ecb, EntityArchetype archetype, ReactiveComponent rx)
+        where ReactiveComponent : struct, IReactive
+        {
+            Issue(ecb, archetype);
+            ecb.SetComponent(rx);
+        }
+
+        /// <summary>
+        /// Please use archetype from EntityManager.CreateReactiveArchetype! The method has no check if you use any other incompatible archetype.
+        /// </summary>
+        public static void Issue(this EntityCommandBuffer ecb, EntityArchetype archetype)
+        {
+            ecb.CreateEntity(archetype);
         }
 
         public static void Issue<ReactiveComponent, ReactiveGroup>(this EntityCommandBuffer.Concurrent ecb)
