@@ -3,48 +3,31 @@ using UnityEngine;
 
 namespace E7.ECS
 {
-    /// <summary>
-    /// An inject struct that has a reactive component to be removed at the end of system function,
-    /// plus an injected array of entities so that we knows which one to remove a component from.
-    /// We need one more component data array with IReactive, but it is not enforced in this interface.
-    /// </summary>
-    public interface IReactiveInjectGroup<RxGroup>
-    where RxGroup : struct, IReactiveGroup
+    public interface IMessageInjectGroup<MessageGroup>
+    where MessageGroup : struct, IMessageGroup
     {
-        SharedComponentDataArray<RxGroup> ReactiveGroups { get; }
-        SharedComponentDataArray<DestroyReactivesSystem.ReactiveEntity> ReactiveEntityTag { get; }
+        SharedComponentDataArray<MessageGroup> MessageGroups { get; }
+        SharedComponentDataArray<DestroyMessageSystem.MessageEntity> MessageEntity { get; }
         EntityArray Entities { get; }
     }
 
-    public interface ITagResponseDataInjectGroup<ReactiveComponent, DataComponent> : ITagResponseInjectGroup<ReactiveComponent>
+    public interface ITagResponseDataInjectGroup<TagComponent, DataComponent> : ITagResponseInjectGroup<TagComponent>
     where DataComponent : struct, IComponentData
-    where ReactiveComponent : struct, IComponentData, ITag
+    where TagComponent : struct, IComponentData, ITag
     {
         ComponentDataArray<DataComponent> datas { get; }
     }
 
-    public interface ITagResponseInjectGroup<RxComponent> 
-    where RxComponent : struct, IComponentData, ITag
+    public interface ITagResponseInjectGroup<TagComponent> 
+    where TagComponent : struct, IComponentData, ITag
     {
-        ComponentDataArray<RxComponent> ReactiveComponents { get; }
+        ComponentDataArray<TagComponent> TagComponents { get; }
         EntityArray Entities { get; }
     }
 
-    /// <summary>
-    /// Use when an IComponentData is intended to be picked up by some system and immediately remove them without condition.
-    /// </summary>
-    public interface IReactive : ITag { }
+    public interface IMessage : ITag { }
 
-/// <summary>
-/// A E7ECS's reactive system will look for only one kind of reactive group, while that group could contains various reactions to perform.
-/// </summary>
-    public interface IReactiveGroup : ISharedComponentData { }
+    public interface IMessageGroup : ISharedComponentData { }
 
-    /// <summary>
-    /// Use when an `IComponentData` is to stick around and dictates behaviour, or use with `SubtractiveComponent` for example.
-    /// Or use when a removal is optional unlike `IReactive`.
-    /// </summary>
-
-    //TODO : Make it a shared component data? So adding a tag/reactives is just a matter of be in a different chunk but still the same shape.
     public interface ITag : IComponentData { }
 }

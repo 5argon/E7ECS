@@ -7,20 +7,29 @@ using System.Collections.Generic;
 
 namespace E7.ECS
 {
-    public static class EntityManagerExtension 
+    /// <summary>
+    /// Just a wrapper that this is not an ordinary archetype
+    /// </summary>
+    public struct MessageArchetype
+    {
+        public EntityArchetype archetype;
+    }
+
+    public static class EntityManagerExtension
     {
         /// <summary>
         /// If you just loop and destroy each one in EntityArray without a command buffer, it will cause problems mid-loop!
         /// </summary>
         public static void DestroyAllInEntityArray(this EntityManager em, EntityArray ea)
         {
-            var na = new NativeArray<Entity>(ea.Length, Allocator.Temp);
-            ea.CopyTo(na,0);
-            for (int i = 0; i < na.Length; i++)
+            using (var na = new NativeArray<Entity>(ea.Length, Allocator.Temp))
             {
-                em.DestroyEntity(na[i]);
+                ea.CopyTo(na, 0);
+                for (int i = 0; i < na.Length; i++)
+                {
+                    em.DestroyEntity(na[i]);
+                }
             }
-            na.Dispose();
         }
 
         public static void UpsertComponentData<T>(this EntityManager em, Entity entity) where T : struct, IComponentData => UpsertComponentData<T>(em, entity, default(T));
@@ -62,124 +71,82 @@ namespace E7.ECS
             }
         }
 
-        public static EntityArchetype CreateReactiveArchetype<ReactiveComponent, ReactiveGroup>(this EntityManager em) 
-        where ReactiveComponent : struct, IReactive
-        where ReactiveGroup : struct, IReactiveGroup
+        public static MessageArchetype CreateMessageArchetype<MessageComponent, MessageGroup>(this EntityManager em)
+        where MessageComponent : struct, IMessage
+        where MessageGroup : struct, IMessageGroup
         {
-            return em.CreateArchetype(
-                ComponentType.ReadOnly<ReactiveComponent>(),
-                ComponentType.ReadOnly<ReactiveGroup>(),
-                ComponentType.ReadOnly<DestroyReactivesSystem.ReactiveEntity>()
-            );
+            return new MessageArchetype
+            {
+                archetype = em.CreateArchetype(
+                ComponentType.ReadOnly<MessageComponent>(),
+                ComponentType.ReadOnly<MessageGroup>(),
+                ComponentType.ReadOnly<DestroyMessageSystem.MessageEntity>()
+                )
+            };
         }
 
-        /// <summary>
-        /// Make a new entity just for carrying the reactive component.
-        /// A system like `ReactiveCS`, `ReactiveMonoCS`, or `ReactiveJCS` can pick it up,
-        /// take action, and destroy them afterwards automatically.
-        /// </summary>
-        /// <typeparam name="ReactiveComponent">An `IReactive` which you can check in the receiving system what action to take.</typeparam>
-        /// <typeparam name="ReactiveGroup">An `IReactiveGroup` that determines which system could pick up the reaction.</typeparam>
-        public static void Issue<ReactiveComponent, ReactiveGroup>(this EntityManager ecb)
-        where ReactiveComponent : struct, IReactive
-        where ReactiveGroup : struct, IReactiveGroup
-        => Issue<ReactiveComponent, ReactiveGroup>(ecb, default, default);
+        public static void Message<MessageComponent, MessageGroup>(this EntityManager ecb)
+        where MessageComponent : struct, IMessage
+        where MessageGroup : struct, IMessageGroup
+        => Message<MessageComponent, MessageGroup>(ecb, default, default);
 
-        /// <summary>
-        /// Make a new entity just for carrying the reactive component.
-        /// A system like `ReactiveCS`, `ReactiveMonoCS`, or `ReactiveJCS` can pick it up,
-        /// take action, and destroy them afterwards automatically.
-        /// </summary>
-        /// <typeparam name="ReactiveComponent">An `IReactive` which you can check in the receiving system what action to take.</typeparam>
-        /// <typeparam name="ReactiveGroup">An `IReactiveGroup` that determines which system could pick up the reaction.</typeparam>
-        public static void Issue<ReactiveComponent, ReactiveGroup>(this EntityManager ecb, ReactiveComponent rx)
-        where ReactiveComponent : struct, IReactive
-        where ReactiveGroup : struct, IReactiveGroup
-        => Issue<ReactiveComponent, ReactiveGroup>(ecb, rx, default);
+        public static void Message<MessageComponent, MessageGroup>(this EntityManager ecb, MessageComponent rx)
+        where MessageComponent : struct, IMessage
+        where MessageGroup : struct, IMessageGroup
+        => Message<MessageComponent, MessageGroup>(ecb, rx, default);
 
-        /// <summary>
-        /// Make a new entity just for carrying the reactive component.
-        /// A system like `ReactiveCS`, `ReactiveMonoCS`, or `ReactiveJCS` can pick it up,
-        /// take action, and destroy them afterwards automatically.
-        /// </summary>
-        /// <typeparam name="ReactiveComponent">An `IReactive` which you can check in the receiving system what action to take.</typeparam>
-        /// <typeparam name="ReactiveGroup">An `IReactiveGroup` that determines which system could pick up the reaction.</typeparam>
-        public static void Issue<ReactiveComponent, ReactiveGroup>(this EntityManager ecb, ReactiveComponent rx, ReactiveGroup rg)
-        where ReactiveComponent : struct, IReactive
-        where ReactiveGroup : struct, IReactiveGroup
+        public static void Message<MessageComponent, MessageGroup>(this EntityManager ecb, MessageComponent rx, MessageGroup rg)
+        where MessageComponent : struct, IMessage
+        where MessageGroup : struct, IMessageGroup
         {
             //Debug.Log($"Issuing {typeof(ReactiveComponent).Name} (ECB)");
             var e = ecb.CreateEntity();
-            ecb.AddComponentData<ReactiveComponent>(e, rx);
-            ecb.AddSharedComponentData<ReactiveGroup>(e, rg);
+            ecb.AddComponentData<MessageComponent>(e, rx);
+            ecb.AddSharedComponentData<MessageGroup>(e, rg);
             //TODO : Create an archetype that has this because we always need this...
-            ecb.AddSharedComponentData<DestroyReactivesSystem.ReactiveEntity>(e, default);
+            ecb.AddSharedComponentData<DestroyMessageSystem.MessageEntity>(e, default);
         }
     }
 
     public static class EntityCommandBufferExtension
     {
-        public static void Issue<ReactiveComponent, ReactiveGroup>(this EntityCommandBuffer ecb)
-        where ReactiveComponent : struct, IReactive
-        where ReactiveGroup : struct, IReactiveGroup
-        => Issue<ReactiveComponent, ReactiveGroup>(ecb, default, default);
-
-        public static void Issue<ReactiveComponent, ReactiveGroup>(this EntityCommandBuffer ecb, ReactiveComponent rx)
-        where ReactiveComponent : struct, IReactive
-        where ReactiveGroup : struct, IReactiveGroup
-        => Issue<ReactiveComponent, ReactiveGroup>(ecb, rx, default);
-
-        public static void Issue<ReactiveComponent, ReactiveGroup>(this EntityCommandBuffer ecb, ReactiveComponent rx, ReactiveGroup rg)
-        where ReactiveComponent : struct, IReactive
-        where ReactiveGroup : struct, IReactiveGroup
-        {
-            //Debug.Log($"Issuing {typeof(ReactiveComponent).Name} (ECB)");
-            ecb.CreateEntity();
-            ecb.AddComponent<ReactiveComponent>(rx);
-            ecb.AddSharedComponent<ReactiveGroup>(rg);
-            //TODO : Create an archetype that has this because we always need this...
-            ecb.AddSharedComponent<DestroyReactivesSystem.ReactiveEntity>(default);
-        }
-
         /// <summary>
-        /// Please use archetype from EntityManager.CreateReactiveArchetype! The method has no check if you use any other incompatible archetype.
+        /// Please use archetype from EntityManager.CreateReactiveArchetype! 
         /// Creating will be faster but we still have to SetComponent once.
         /// </summary>
-        public static void Issue<ReactiveComponent>(this EntityCommandBuffer ecb, EntityArchetype archetype, ReactiveComponent rx)
-        where ReactiveComponent : struct, IReactive
+        public static void Message<MessageComponent>(this EntityCommandBuffer.Concurrent ecb, MessageArchetype msa, MessageComponent rx)
+        where MessageComponent : struct, IMessage
         {
-            Issue(ecb, archetype);
+            Message(ecb, msa);
             ecb.SetComponent(rx);
         }
 
         /// <summary>
-        /// Please use archetype from EntityManager.CreateReactiveArchetype! The method has no check if you use any other incompatible archetype.
+        /// Please use archetype from EntityManager.CreateReactiveArchetype! 
+        /// Creating will be faster but we still have to SetComponent once.
         /// </summary>
-        public static void Issue(this EntityCommandBuffer ecb, EntityArchetype archetype)
+        public static void Message(this EntityCommandBuffer.Concurrent ecb, MessageArchetype msa)
         {
-            ecb.CreateEntity(archetype);
+            ecb.CreateEntity(msa.archetype);
         }
 
-        public static void Issue<ReactiveComponent, ReactiveGroup>(this EntityCommandBuffer.Concurrent ecb)
-        where ReactiveComponent : struct, IReactive
-        where ReactiveGroup : struct, IReactiveGroup
-        => Issue<ReactiveComponent, ReactiveGroup>(ecb, default, default);
-
-        public static void Issue<ReactiveComponent, ReactiveGroup>(this EntityCommandBuffer.Concurrent ecb, ReactiveComponent rx)
-        where ReactiveComponent : struct, IReactive
-        where ReactiveGroup : struct, IReactiveGroup
-        => Issue<ReactiveComponent, ReactiveGroup>(ecb, rx, default);
-
-        public static void Issue<ReactiveComponent, ReactiveGroup>(this EntityCommandBuffer.Concurrent ecb, ReactiveComponent rx, ReactiveGroup rg)
-        where ReactiveComponent : struct, IReactive
-        where ReactiveGroup : struct, IReactiveGroup
+        /// <summary>
+        /// Please use archetype from EntityManager.CreateReactiveArchetype! 
+        /// Creating will be faster but we still have to SetComponent once.
+        /// </summary>
+        public static void Message<MessageComponent>(this EntityCommandBuffer ecb, MessageArchetype msa, MessageComponent rx)
+        where MessageComponent : struct, IMessage
         {
-            //Debug.Log($"Issuing {typeof(ReactiveComponent).Name} (ECB)");
-            ecb.CreateEntity();
-            ecb.AddComponent<ReactiveComponent>(rx);
-            ecb.AddSharedComponent<ReactiveGroup>(rg);
-            //TODO : Create an archetype that has this because we always need this...
-            ecb.AddSharedComponent<DestroyReactivesSystem.ReactiveEntity>(default);
+            Message(ecb, msa);
+            ecb.SetComponent(rx);
+        }
+
+        /// <summary>
+        /// Please use archetype from EntityManager.CreateReactiveArchetype! 
+        /// </summary>
+        public static void Message(this EntityCommandBuffer ecb, MessageArchetype msa)
+        {
+            ecb.CreateEntity(msa.archetype);
         }
 
         /// <summary>
@@ -258,6 +225,9 @@ namespace E7.ECS
 
     public static class ComponentDataArrayExtension
     {
+        /// <summary>
+        /// Like `EntityArray.ToArray` but for CDA.
+        /// </summary>
         public static List<T> CopyToList<T>(this ComponentDataArray<T> cda) where T : struct, IComponentData
         {
             using (var na = new NativeArray<T>(cda.Length, Allocator.Temp))

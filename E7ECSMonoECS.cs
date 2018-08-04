@@ -10,8 +10,8 @@ namespace E7.ECS
     public static class ActiveWorld
     {
         public static void Issue<ReactiveComponent,ReactiveGroup>()
-        where ReactiveComponent : struct, IReactive
-        where ReactiveGroup : struct, IReactiveGroup
-        => World.Active.GetExistingManager<EntityManager>().Issue<ReactiveComponent, ReactiveGroup>();
+        where ReactiveComponent : struct, IMessage
+        where ReactiveGroup : struct, IMessageGroup
+        => World.Active.GetExistingManager<EntityManager>().Message<ReactiveComponent, ReactiveGroup>();
     }
 }

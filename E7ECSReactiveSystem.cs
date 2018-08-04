@@ -41,25 +41,13 @@ namespace E7.ECS
         }
     }
 
-    /// <summary>
-    /// `ReactiveJCS` has a different approach from `ReactiveCS`.
-    /// Because you usually wants to bring all the stuffs to do together inside the job, use `GetReactions<T>`
-    /// to get a `ComponentDataArray<T>` of that reactive type.
-    /// </summary>
     public abstract class ReactiveJCS<ReactiveGroup> : JobComponentSystem
-    where ReactiveGroup : struct, IReactiveGroup 
+    where ReactiveGroup : struct, IMessageGroup 
     {
-        /// <summary>
-        /// Determines how many inject groups you will have. 
-        /// Use the same type with `GetReactions<T>` to get the `ComponentDataArray<T>` of reactives.
-        /// </summary>
         protected abstract ComponentType[] ReactsTo { get; }
 
         private Dictionary<ComponentType, ComponentGroup> allInjects;
 
-        /// <summary>
-        /// Dynamically inject reactive entities.
-        /// </summary>
         protected override void OnCreateManager(int capacity)
         {
             var types = ReactsTo;
@@ -70,7 +58,7 @@ namespace E7.ECS
             }
         }
 
-        protected ComponentDataArray<T> GetReactions<T>() where T : struct, IReactive
+        protected ComponentDataArray<T> GetReactions<T>() where T : struct, IMessage
         {
             return allInjects[ComponentType.Create<T>()].GetComponentDataArray<T>();
         }
@@ -84,26 +72,19 @@ namespace E7.ECS
         }
     }
 
-    /// <summary>
-    /// A reactive entity could be handled by multiple systems, but they will not persist across frame.
-    /// This system will clean them up on each frame.
-    /// </summary>
     [UpdateBefore(typeof(Initialization))]
-    public class DestroyReactivesSystem : ComponentSystem
+    public class DestroyMessageSystem : ComponentSystem
     {
-        /// <summary>
-        /// All entities created from `.Issue` has this shared component data, so they can be cleaned up together at the end frame.
-        /// Also `EntityManager.CreateReactiveArchetype` will get you an archetype with this.
-        /// </summary>
-        public struct ReactiveEntity : ISharedComponentData { }
+        public struct MessageEntity : ISharedComponentData { }
 
-        struct AllReactives
+        struct AllMessages
         {
-            [ReadOnly] public SharedComponentDataArray<ReactiveEntity> reactiveEntities;
+            [ReadOnly] public SharedComponentDataArray<MessageEntity> reactiveEntities;
             [ReadOnly] public EntityArray entities;
             public readonly int GroupIndex;
         }
-        [Inject] AllReactives allReactives;
+        [Inject] AllMessages allReactives;
+
 
         protected override void OnUpdate()
         {
@@ -112,18 +93,12 @@ namespace E7.ECS
     }
 
     public abstract class ReactiveCSBase<ReactiveGroup> : ComponentSystem
-    where ReactiveGroup : struct, IReactiveGroup
+    where ReactiveGroup : struct, IMessageGroup
     {
-        private protected abstract IReactiveInjectGroup<ReactiveGroup> InjectedReactivesInGroup { get; }
+        private protected abstract IMessageInjectGroup<ReactiveGroup> InjectedReactivesInGroup { get; }
 
-        /// <summary>
-        /// Will not run if it could not find any reactive entities.
-        /// </summary>
         protected virtual void OnOncePerAllReactions() { }
 
-        /// <summary>
-        /// Use `if(ReactsTo<IReactive>...` given that `IReactive` belongs to the group.
-        /// </summary>
         protected abstract void OnReaction();
         protected override void OnUpdate()
         {
@@ -146,7 +121,7 @@ namespace E7.ECS
         }
 
         private protected Entity iteratingEntity;
-        protected bool ReactsTo<T>(out T reactiveComponent) where T : struct, IReactive
+        protected bool ReactsTo<T>(out T reactiveComponent) where T : struct, IMessage
         {
             //Debug.Log("Checking with " + typeof(T).Name);
             if (EntityManager.HasComponent<T>(iteratingEntity))
@@ -166,25 +141,25 @@ namespace E7.ECS
     /// `OnReaction`, all of them will be destroyed automatically. (Runs only once)
     /// </summary>
     public abstract class ReactiveCS<ReactiveGroup> : ReactiveCSBase<ReactiveGroup>
-    where ReactiveGroup : struct, IReactiveGroup
+    where ReactiveGroup : struct, IMessageGroup
     {
         /// <summary>
         /// Captures reactive entities ready to be destroy after the task.
         /// </summary>
-        protected struct ReactiveInjectGroup : IReactiveInjectGroup<ReactiveGroup>
+        protected struct ReactiveInjectGroup : IMessageInjectGroup<ReactiveGroup>
         {
             [ReadOnly] public SharedComponentDataArray<ReactiveGroup> reactiveGroups;
-            [ReadOnly] public SharedComponentDataArray<DestroyReactivesSystem.ReactiveEntity> reactiveEntityTag;
+            [ReadOnly] public SharedComponentDataArray<DestroyMessageSystem.MessageEntity> reactiveEntityTag;
             public EntityArray entities;
             public readonly int Length;
 
-            public SharedComponentDataArray<ReactiveGroup> ReactiveGroups => reactiveGroups;
-            public SharedComponentDataArray<DestroyReactivesSystem.ReactiveEntity> ReactiveEntityTag => reactiveEntityTag;
+            public SharedComponentDataArray<ReactiveGroup> MessageGroups => reactiveGroups;
+            public SharedComponentDataArray<DestroyMessageSystem.MessageEntity> MessageEntity => reactiveEntityTag;
             public EntityArray Entities => entities;
         }
         [Inject] private protected ReactiveInjectGroup injectedReactivesInGroup;
 
-        private protected override IReactiveInjectGroup<ReactiveGroup> InjectedReactivesInGroup => injectedReactivesInGroup;
+        private protected override IMessageInjectGroup<ReactiveGroup> InjectedReactivesInGroup => injectedReactivesInGroup;
     }
 
     /// <summary>
@@ -196,7 +171,7 @@ namespace E7.ECS
     /// `OnReaction`, all of them will be destroyed automatically. (Runs only once)
     /// </summary>
     public abstract class ReactiveMonoCS<ReactiveGroup, MonoComponent> : ReactiveCS<ReactiveGroup>
-    where ReactiveGroup : struct, IReactiveGroup
+    where ReactiveGroup : struct, IMessageGroup
     where MonoComponent : Component
     {
         /// <summary>
@@ -360,7 +335,7 @@ namespace E7.ECS
             [ReadOnly] public EntityArray entities;
             public readonly int Length;
 
-            public ComponentDataArray<TagComponent> ReactiveComponents => reactiveComponents;
+            public ComponentDataArray<TagComponent> TagComponents => reactiveComponents;
             public EntityArray Entities => entities;
         }
         [Inject] private protected InjectGroup injectedGroup;
@@ -383,7 +358,7 @@ namespace E7.ECS
             public ComponentDataArray<DataComponent> datas { get; }
             public readonly int Length;
 
-            public ComponentDataArray<TagComponent> ReactiveComponents => reactiveComponents;
+            public ComponentDataArray<TagComponent> TagComponents => reactiveComponents;
             public EntityArray Entities => entities;
         }
 
