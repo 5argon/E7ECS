@@ -46,21 +46,21 @@ namespace E7.ECS
     {
         protected abstract ComponentType[] ReactsTo { get; }
 
-        private Dictionary<ComponentType, ComponentGroup> allInjects;
+        private Dictionary<int, ComponentGroup> allInjects;
 
         protected override void OnCreateManager(int capacity)
         {
             var types = ReactsTo;
-            allInjects = new Dictionary<ComponentType, ComponentGroup>();
+            allInjects = new Dictionary<int, ComponentGroup>();
             for (int i = 0; i < types.Length; i++)
             {
-                allInjects.Add(types[i], GetComponentGroup(types[i], ComponentType.ReadOnly<ReactiveGroup>()));
+                allInjects.Add(types[i].TypeIndex, GetComponentGroup(types[i], ComponentType.ReadOnly<ReactiveGroup>()));
             }
         }
 
         protected ComponentDataArray<T> GetReactions<T>() where T : struct, IMessage
         {
-            return allInjects[ComponentType.Create<T>()].GetComponentDataArray<T>();
+            return allInjects[TypeManager.GetTypeIndex<T>()].GetComponentDataArray<T>();
         }
 
         protected abstract JobHandle OnReaction(JobHandle inputDeps);
