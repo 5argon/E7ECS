@@ -10,6 +10,69 @@ using System.Collections.Generic;
 
 namespace E7.ECS
 {
+    public interface IInjectedCheckable
+    {
+        bool Injected { get; }
+    }
+
+    public struct SingleComponent<T> : IInjectedCheckable
+     where T : Component
+    {
+        [ReadOnly] public ComponentArray<T> components;
+        public readonly int Length;
+        public T First => components[0];
+
+        public IEnumerable<T> ComponentIterator
+        {
+            get
+            {
+                for (int i = 0; i < Length; i++)
+                {
+                    yield return components[i];
+                }
+            }
+        }
+
+        /// <summary>
+        /// When you have multiple injects the system will activates even with one struct injection passed. 
+        /// You can use this so that `.First` is safe to use.
+        /// </summary>
+        public bool Injected => Length != 0;
+    }
+
+    public struct SingleComponentData<T> : IInjectedCheckable
+     where T : struct, IComponentData
+    {
+        public ComponentDataArray<T> datas;
+        [ReadOnly] public EntityArray entities;
+        public readonly int Length;
+
+        public IEnumerable<T> DataIterator 
+        {
+            get
+            {
+                for (int i = 0; i < Length; i++)
+                {
+                    yield return datas[i];
+                }
+            }
+        }
+
+        /// <summary>
+        /// If this inject activates the system's update this must have at least 1 element.
+        /// </summary>
+        public T First {
+            get => datas[0];
+            set => datas[0] = value;
+        }
+
+        /// <summary>
+        /// When you have multiple injects the system will activates even with one struct injection passed. 
+        /// You can use this so that `.First` is safe to use.
+        /// </summary>
+        public bool Injected => Length != 0;
+    }
+
     public static class AssertECS
     {
         public static EntityArray EntitiesOfArchetype(this World world, params ComponentType[] types)
@@ -121,16 +184,39 @@ namespace E7.ECS
         }
 
         private protected Entity iteratingEntity;
+
+        /// <summary>
+        /// Use this overload if you are not going to use the `out` variable. (empty message content) Saves you a `GetComponentData`.
+        /// </summary>
+        protected bool ReactsTo<T>() where T : struct, IMessage => EntityManager.HasComponent<T>(iteratingEntity);
+
         protected bool ReactsTo<T>(out T reactiveComponent) where T : struct, IMessage
         {
             //Debug.Log("Checking with " + typeof(T).Name);
-            if (EntityManager.HasComponent<T>(iteratingEntity))
+            if (ReactsTo<T>())
             {
                 reactiveComponent = EntityManager.GetComponentData<T>(iteratingEntity);
                 return true;
             }
             reactiveComponent = default;
             return false;
+        }
+    }
+
+    public static class MessageUtility
+    {
+        /// <summary>
+        /// You can manually inject only one type of message of the group with the output of this to GetComponentGroup
+        /// </summary>
+        public static ComponentType[] GetMessageTypes<Message, MessageGroup>()
+        where Message : struct, IMessage
+        where MessageGroup : struct, IMessageGroup
+        {
+            return new ComponentType[] {
+                ComponentType.ReadOnly<Message>(),
+                ComponentType.ReadOnly<MessageGroup>(),
+                ComponentType.ReadOnly<DestroyMessageSystem.MessageEntity>()
+            };
         }
     }
 
@@ -209,95 +295,6 @@ namespace E7.ECS
         }
 
         protected ComponentArray<MonoComponent> MonoComponentArray => monoGroup.monoComponents;
-    }
-
-    /// <summary>
-    /// Not really reactive but nice to have... basically get a `MonoBehaviour` entities.
-    /// </summary>
-    public abstract class MonoCS<MonoComponent> : ComponentSystem
-    where MonoComponent : Component
-    {
-        /// <summary>
-        /// Captures your `MonoBehaviour`s
-        /// </summary>
-        protected struct MonoGroup
-        {
-            [ReadOnly] public ComponentArray<MonoComponent> monoComponents;
-            public readonly int Length;
-        }
-        [Inject] private protected MonoGroup monoGroup;
-
-        protected bool AnyMono => monoGroup.Length > 0;
-
-        /// <summary>
-        /// Get the first `MonoBehaviour` captured. 
-        /// </summary>
-        protected MonoComponent FirstMono
-#if !I_AM_WORRIED_ABOUT_EXECEPTION_PERFORMANCE
-        => monoGroup.Length > 0 ? monoGroup.monoComponents[0] : throw new System.Exception($"You don't have any {typeof(MonoComponent).Name} which has GameObjectEntity attached...");
-#else
-        => monoGroup.monoComponents[0];
-#endif
-
-        /// <summary>
-        /// Iterate on all `MonoBehaviour` captured.
-        /// </summary>
-        protected IEnumerable<MonoComponent> MonoComponents
-        {
-            get
-            {
-                for (int i = 0; i < monoGroup.Length; i++)
-                {
-                    yield return monoGroup.monoComponents[i];
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    /// Not really reactive but nice to have... basically get a `MonoBehaviour` entities and an another set of unrelated entities with `IComponentData` that you want.
-    /// The system will run anyways even without data if you have your MonoBehaviour. Use `NoData` to early exit.
-    /// </summary>
-    public abstract class MonoDataCS<MonoComponent, DataComponent> : MonoCS<MonoComponent>
-    where MonoComponent : Component
-    where DataComponent : struct, IComponentData
-    {
-        protected struct InjectedDataGroup
-        {
-            public ComponentDataArray<DataComponent> dataComponents;
-            public EntityArray entityArray;
-            public readonly int Length;
-        }
-        [Inject] private protected InjectedDataGroup dataGroup;
-
-        protected InjectedDataGroup DataGroup => dataGroup;
-
-        /// <summary>
-        /// Iterate on all `IComponentData` captured.
-        /// </summary>
-        protected IEnumerable<DataComponent> DataComponents
-        {
-            get
-            {
-                for (int i = 0; i < dataGroup.Length; i++)
-                {
-                    yield return dataGroup.dataComponents[i];
-                }
-            }
-        }
-
-        protected bool NoData => dataGroup.Length == 0;
-
-        [Inject] private protected EndFrameBarrier efb;
-
-        protected void DestroyAllEntitiesOfDataComponent()
-        {
-            var ecb = efb.CreateCommandBuffer();
-            for (int i = 0; i < dataGroup.entityArray.Length; i++)
-            {
-                ecb.DestroyEntity(dataGroup.entityArray[i]);
-            }
-        }
     }
 
     public abstract class TagResponseJCSBase<TagComponent> : JobComponentSystem
