@@ -1,18 +1,44 @@
 #define I_AM_WORRIED_ABOUT_EXECEPTION_PERFORMANCE
 
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Experimental.PlayerLoop;
 using System.Collections.Generic;
+using UnityEngine.Jobs;
 
 namespace E7.ECS
 {
     public interface IInjectedCheckable
     {
         bool Injected { get; }
+    }
+
+    public struct SingleTransformComponent<T> : IInjectedCheckable
+     where T : Component
+    {
+        [ReadOnly] public ComponentArray<T> components;
+        public TransformAccessArray taa;
+        public readonly int Length;
+
+        public T First => components[0];
+        public IEnumerable<T> ComponentIterator
+        {
+            get
+            {
+                for (int i = 0; i < Length; i++)
+                {
+                    yield return components[i];
+                }
+            }
+        }
+
+        /// <summary>
+        /// When you have multiple injects the system will activates even with one struct injection passed. 
+        /// You can use this so that `.First` is safe to use.
+        /// </summary>
+        public bool Injected => Length != 0;
     }
 
     public struct SingleComponent<T> : IInjectedCheckable
@@ -190,26 +216,28 @@ namespace E7.ECS
         }
     }
 
-    public abstract class ReactiveCSBase<ReactiveGroup> : ComponentSystem
+    public abstract class ReactiveCSBase<ReactiveGroup> : JobComponentSystem
     where ReactiveGroup : struct, IMessageGroup
     {
         private protected abstract IMessageInjectGroup<ReactiveGroup> InjectedReactivesInGroup { get; }
 
-        protected virtual void OnOncePerAllReactions() { }
+        protected virtual void OnBeforeAllMessages() { }
+        protected virtual JobHandle OnAfterAllMessages(JobHandle inputDeps) => inputDeps;
 
         protected abstract void OnReaction();
-        protected override void OnUpdate()
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             //There is a possibility that we have a mono entity but not any reactive entities in `ReactiveMonoCS`.
             //Debug.Log("REACTIVE LENGTH " + InjectedReactivesInGroup.Entities.Length);
             // try
             // {
-                OnOncePerAllReactions();
+                OnBeforeAllMessages();
                 for (int i = 0; i < InjectedReactivesInGroup.Entities.Length; i++)
                 {
                     iteratingEntity = InjectedReactivesInGroup.Entities[i];
                     OnReaction();
                 }
+                return OnAfterAllMessages(inputDeps);
             // }
             // catch (System.InvalidOperationException)
             // {
