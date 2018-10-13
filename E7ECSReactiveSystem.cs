@@ -6,173 +6,17 @@ using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Experimental.PlayerLoop;
 using System.Collections.Generic;
-using UnityEngine.Jobs;
 
 namespace E7.ECS
 {
-    public interface IInjectedCheckable
-    {
-        bool Injected { get; }
-    }
-
-    public struct SingleTransformComponent<T> : IInjectedCheckable
-     where T : Component
-    {
-        [ReadOnly] public ComponentArray<T> components;
-        public TransformAccessArray taa;
-        public readonly int Length;
-
-        public T First => components[0];
-        public IEnumerable<T> ComponentIterator
-        {
-            get
-            {
-                for (int i = 0; i < Length; i++)
-                {
-                    yield return components[i];
-                }
-            }
-        }
-
-        /// <summary>
-        /// When you have multiple injects the system will activates even with one struct injection passed. 
-        /// You can use this so that `.First` is safe to use.
-        /// </summary>
-        public bool Injected => Length != 0;
-    }
-
-    public struct SingleComponent<T> : IInjectedCheckable
-     where T : Component
-    {
-        [ReadOnly] public ComponentArray<T> components;
-        public readonly int Length;
-        public T First => components[0];
-
-        public IEnumerable<T> ComponentIterator
-        {
-            get
-            {
-                for (int i = 0; i < Length; i++)
-                {
-                    yield return components[i];
-                }
-            }
-        }
-
-        /// <summary>
-        /// When you have multiple injects the system will activates even with one struct injection passed. 
-        /// You can use this so that `.First` is safe to use.
-        /// </summary>
-        public bool Injected => Length != 0;
-    }
-
-    public struct SingleComponentData<T> : IInjectedCheckable
-     where T : struct, IComponentData
-    {
-        [ReadOnly] public ComponentDataArray<T> datas;
-        [ReadOnly] public EntityArray entities;
-        public readonly int Length;
-
-        public IEnumerable<T> DataIterator 
-        {
-            get
-            {
-                for (int i = 0; i < Length; i++)
-                {
-                    yield return datas[i];
-                }
-            }
-        }
-
-        /// <summary>
-        /// If you are planning to use this it is best to do it in the job so that auto dependencies works.
-        /// IF you `First` before entering the job you might access the underlying data while other systems are busy writing to it.
-        /// </summary>
-        public T First {
-            get => datas[0];
-            set => datas[0] = value;
-        }
-
-        /// <summary>
-        /// When you have multiple injects the system will activates even with one struct injection passed. 
-        /// You can use this so that `.First` is safe to use.
-        /// </summary>
-        public bool Injected => Length != 0;
-    }
-
-    public struct SingleComponentDataRW<T> : IInjectedCheckable
-     where T : struct, IComponentData
-    {
-        public ComponentDataArray<T> datas;
-        [ReadOnly] public EntityArray entities;
-        public readonly int Length;
-
-        public IEnumerable<T> DataIterator 
-        {
-            get
-            {
-                for (int i = 0; i < Length; i++)
-                {
-                    yield return datas[i];
-                }
-            }
-        }
-
-        /// <summary>
-        /// If you are planning to use this it is best to do it in the job so that auto dependencies works.
-        /// IF you `First` before entering the job you might access the underlying data while other systems are busy writing to it.
-        /// </summary>
-        public T First {
-            get => datas[0];
-            set => datas[0] = value;
-        }
-
-        /// <summary>
-        /// When you have multiple injects the system will activates even with one struct injection passed. 
-        /// You can use this so that `.First` is safe to use.
-        /// </summary>
-        public bool Injected => Length != 0;
-    }
-
-    public static class AssertECS
-    {
-        public static EntityArray EntitiesOfArchetype(this World world, params ComponentType[] types)
-        {
-            var ai = world.GetOrCreateManager<AssertInjector>();
-            return ai.EntitiesOfArchetype(types);
-        }
-
-        public static bool HasEntityArchetype(this World world, params ComponentType[] types)
-        {
-            var ai = world.GetOrCreateManager<AssertInjector>();
-            return ai.Any(types);
-        }
-
-        [DisableAutoCreation]
-        public class AssertInjector : ComponentSystem
-        {
-            protected override void OnCreateManager(int capacity) => this.Enabled = false;
-            protected override void OnUpdate() { }
-
-            public bool Any(params ComponentType[] types) => EntitiesOfArchetype(types).Length != 0;
-
-            public EntityArray EntitiesOfArchetype(params ComponentType[] types)
-            {
-                var cg = GetComponentGroup(types);
-                return cg.GetEntityArray();
-            }
-
-        }
-    }
-
     public abstract class ReactiveJCS<ReactiveGroup> : JobComponentSystem
-    where ReactiveGroup : struct, IMessageGroup 
+    where ReactiveGroup : struct, IMessageGroup
     {
         protected abstract ComponentType[] ReactsTo { get; }
 
         private Dictionary<int, ComponentGroup> allInjects;
 
-        protected override void OnCreateManager(int capacity)
+        protected override void OnCreateManager()
         {
             var types = ReactsTo;
             allInjects = new Dictionary<int, ComponentGroup>();
@@ -231,18 +75,18 @@ namespace E7.ECS
             //Debug.Log("REACTIVE LENGTH " + InjectedReactivesInGroup.Entities.Length);
             // try
             // {
-                OnBeforeAllMessages();
-                for (int i = 0; i < InjectedReactivesInGroup.Entities.Length; i++)
-                {
-                    iteratingEntity = InjectedReactivesInGroup.Entities[i];
-                    OnReaction();
-                }
-                return OnAfterAllMessages(inputDeps);
+            OnBeforeAllMessages();
+            for (int i = 0; i < InjectedReactivesInGroup.Entities.Length; i++)
+            {
+                iteratingEntity = InjectedReactivesInGroup.Entities[i];
+                OnReaction();
+            }
+            return OnAfterAllMessages(inputDeps);
             // }
             // catch (System.InvalidOperationException)
             // {
-                // Debug.LogError("Did you use EntityManager and invalidate the injected array? Group : " + typeof(ReactiveGroup).Name);
-                // throw;
+            // Debug.LogError("Did you use EntityManager and invalidate the injected array? Group : " + typeof(ReactiveGroup).Name);
+            // throw;
             // }
         }
 
@@ -336,7 +180,7 @@ namespace E7.ECS
         /// <summary>
         /// Get the first `MonoBehaviour` captured. Useful when you know there's only one in the scene to take all the reactive actions.
         /// </summary>
-        protected MonoComponent FirstMono 
+        protected MonoComponent FirstMono
 #if !I_AM_WORRIED_ABOUT_EXECEPTION_PERFORMANCE
         => monoGroup.Length > 0 ? monoGroup.monoComponents[0] : throw new System.Exception($"You don't have any {typeof(MonoComponent).Name} which has GameObjectEntity attached...");
 #else
@@ -378,28 +222,6 @@ namespace E7.ECS
                 ecb.RemoveComponent<TagComponent>(InjectedGroup.Entities[i]);
             }
         }
-    }
-
-
-    /// <summary>
-    /// When you want to make a reactive system that removes that component at the end, this is a nice start.
-    /// You can send the whole InjectGroup into the job with [ReadOnly]
-    /// Use `InjectedGroup` to get the data.
-    /// </summary>
-    public abstract class TagResponseJCS<TagComponent> : TagResponseJCSBase<TagComponent>
-    where TagComponent : struct, IComponentData, ITag
-    {
-        protected struct InjectGroup : ITagResponseInjectGroup<TagComponent>
-        {
-            [ReadOnly] public ComponentDataArray<TagComponent> reactiveComponents;
-            [ReadOnly] public EntityArray entities;
-            public readonly int Length;
-
-            public ComponentDataArray<TagComponent> TagComponents => reactiveComponents;
-            public EntityArray Entities => entities;
-        }
-        [Inject] private protected InjectGroup injectedGroup;
-        protected override ITagResponseInjectGroup<TagComponent> InjectedGroup => injectedGroup;
     }
 
     /// <summary>

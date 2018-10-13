@@ -32,7 +32,16 @@ namespace E7.ECS
             }
         }
 
-        public static void UpsertComponentData<T>(this EntityManager em, Entity entity) where T : struct, IComponentData => UpsertComponentData<T>(em, entity, default(T));
+        /// <summary>
+        /// Now this supports zero-sized component.
+        /// </summary>
+        public static void UpsertComponentData<T>(this EntityManager em, Entity entity) where T : struct, IComponentData
+        {
+            if (em.HasComponent<T>(entity) == false)
+            {
+                em.AddComponent(entity,typeof(T));
+            }
+        }
 
         public static void UpsertComponentData<T>(this EntityManager em, Entity entity, T tagContent) where T : struct, IComponentData
         {
@@ -114,20 +123,20 @@ namespace E7.ECS
         /// Please use archetype from EntityManager.CreateReactiveArchetype! 
         /// Creating will be faster but we still have to SetComponent once.
         /// </summary>
-        public static void Message<MessageComponent>(this EntityCommandBuffer.Concurrent ecb, MessageArchetype msa, MessageComponent rx)
+        public static void Message<MessageComponent>(this EntityCommandBuffer.Concurrent ecb, int jobIndex, MessageArchetype msa, MessageComponent rx)
         where MessageComponent : struct, IMessage
         {
-            Message(ecb, msa);
-            ecb.SetComponent(rx);
+            Message(ecb, jobIndex, msa);
+            ecb.SetComponent(jobIndex, rx);
         }
 
         /// <summary>
         /// Please use archetype from EntityManager.CreateReactiveArchetype! 
         /// Creating will be faster but we still have to SetComponent once.
         /// </summary>
-        public static void Message(this EntityCommandBuffer.Concurrent ecb, MessageArchetype msa)
+        public static void Message(this EntityCommandBuffer.Concurrent ecb, int jobIndex, MessageArchetype msa)
         {
-            ecb.CreateEntity(msa.archetype);
+            ecb.CreateEntity(jobIndex, msa.archetype);
         }
 
         /// <summary>
@@ -163,14 +172,14 @@ namespace E7.ECS
             ecb.AddComponent<T>(addToEntity, data);
         }
 
-        public static void AddTag<T>(this EntityCommandBuffer.Concurrent ecb, Entity addToEntity)
+        public static void AddTag<T>(this EntityCommandBuffer.Concurrent ecb, int jobIndex, Entity addToEntity)
         where T : struct, IComponentData, ITag
-        => AddTag<T>(ecb, addToEntity, default(T));
+        => AddTag<T>(ecb, jobIndex, addToEntity, default(T));
 
-        public static void AddTag<T>(this EntityCommandBuffer.Concurrent ecb, Entity addToEntity, T data)
+        public static void AddTag<T>(this EntityCommandBuffer.Concurrent ecb, int jobIndex, Entity addToEntity, T data)
         where T : struct, IComponentData, ITag
         {
-            ecb.AddComponent<T>(addToEntity, data);
+            ecb.AddComponent<T>(jobIndex, addToEntity, data);
         }
 
         /// <summary>
@@ -236,6 +245,16 @@ namespace E7.ECS
                 List<T> list = new List<T>(na);
                 return list;
             }
+        }
+
+        /// <summary>
+        /// Like `EntityArray.ToArray` but for CDA.
+        /// </summary>
+        public static List<T> CopyToList<T>(this ComponentDataArray<T> cda, IComparer<T> sorting) where T : struct, IComponentData
+        {
+            var list = CopyToList<T>(cda);
+            list.Sort(sorting);
+            return list;
         }
     }
 }
