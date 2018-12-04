@@ -3,6 +3,7 @@
     "references": [
         "Unity.Collections",
         "Unity.Entities",
+        "Unity.Burst",
         "Unity.Entities.Hybrid",
         "Unity.Mathematics"
     ]
