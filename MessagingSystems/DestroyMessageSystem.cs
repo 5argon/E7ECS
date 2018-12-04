@@ -8,30 +8,19 @@ using UnityEngine.Jobs;
 
 namespace E7.ECS
 {
-    //[UpdateBefore(typeof(EndFrameBarrier))]
-    [UpdateBefore(typeof(DestroyMessageBarrier))]
-    public class DestroyMessageSystem : JobComponentSystem
+    public class DestroyMessageSystem : ComponentSystem
     {
-        public class DestroyMessageBarrier : BarrierSystem { }
-        [Inject] DestroyMessageBarrier barrier;
-
         public struct MessageEntity : IComponentData { }
 
-        protected override JobHandle OnUpdate(JobHandle inputDeps)
+        ComponentGroup cg;
+        protected override void OnCreateManager()
         {
-            return new DestroyMessagesJob(){
-                command = barrier.CreateCommandBuffer().ToConcurrent(),
-            }.Schedule(this, inputDeps);
+            cg = GetComponentGroup(ComponentType.Create<MessageEntity>());
         }
 
-        [BurstCompile]
-        struct DestroyMessagesJob : IJobProcessComponentDataWithEntity<MessageEntity>
+        protected override void OnUpdate()
         {
-            public EntityCommandBuffer.Concurrent command;
-            public void Execute(Entity e, int i, [ReadOnly] ref MessageEntity me)
-            {
-                command.DestroyEntity(i, e);
-            }
+            EntityManager.DestroyEntity(cg);
         }
     }
 }

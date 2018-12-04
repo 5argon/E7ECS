@@ -14,6 +14,7 @@ using Unity.Mathematics;
 
 namespace E7.ECS
 {
+
     public static class WorldHelper
     {
         private const int noPayloadSize = 24;
@@ -29,9 +30,28 @@ namespace E7.ECS
             return (int)(math.ceil(exactSize / (float)multipleOf) * multipleOf);
         }
 
+        public static T LateInject<T>(this World world, T w) where T : ScriptBehaviourManager
+        {
+            if (w == null)
+            {
+                return world.GetOrCreateManager<T>();
+            }
+            else
+            {
+                return w;
+            }
+        }
+
         public static void IncreaseVersion()
         {
             World.Active.GetOrCreateManager<VersionBumperSystem>().BumpVersion();
+        }
+
+        public static void CopyAllEntities(World fromWorld, World toWorld)
+        {
+            var ecs = fromWorld.CreateManager<EntityCloningSystem>();
+            ecs.CloneTo(toWorld);
+            fromWorld.DestroyManager(ecs);
         }
 
         public static World CreateWorld(string name, params Type[] systemTypes)

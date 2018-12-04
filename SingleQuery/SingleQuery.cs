@@ -45,6 +45,11 @@ namespace E7.ECS
         public bool Injected => ComponentGroupLength > 0;
 
         /// <summary>
+        /// Very lazy method and only works in the main thread.
+        /// </summary>
+        public Entity FirstEntity => cg.GetEntityArray()[0];
+
+        /// <summary>
         /// Prepare() in the main thread needed.
         /// </summary>
         public bool FirstChunkUnchanged => !NativeArrayOfChunk.FirstChunkChanged;
