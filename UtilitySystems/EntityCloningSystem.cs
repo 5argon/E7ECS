@@ -3,6 +3,9 @@ using Unity.Collections;
 
 namespace E7.ECS
 {
+    /// <summary>
+    /// Used by WorldHelper.CopyAllEntities
+    /// </summary>
     public class EntityCloningSystem : ComponentSystem
     {
         internal struct Cloned : ISystemStateComponentData { }

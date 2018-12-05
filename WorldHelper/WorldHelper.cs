@@ -14,7 +14,6 @@ using Unity.Mathematics;
 
 namespace E7.ECS
 {
-
     public static class WorldHelper
     {
         private const int noPayloadSize = 24;
@@ -64,7 +63,7 @@ namespace E7.ECS
         {
             foreach (var t in systemTypes)
             {
-                if(!t.IsSubclassOf(typeof(ComponentSystemBase)))
+                if (!t.IsSubclassOf(typeof(ComponentSystemBase)))
                 {
                     throw new ArgumentException($"Hawawa! This type {t.Name} is not a system!");
                 }
