@@ -16,7 +16,11 @@ namespace E7.ECS
             clonedGroup = GetComponentGroup(ComponentType.Create<Cloned>());
         }
 
-        internal void CloneTo(World destinationWorld)
+        /// <summary>
+        /// Clone from the world this system resides in to any destination world.
+        /// TODO : Add `EntityArchetypeQuery` support
+        /// </summary>
+        public void CloneTo(World destinationWorld)
         {
             EntityManager destinationEntityManager = destinationWorld.GetExistingManager<EntityManager>();
             using (var ea = EntityManager.GetAllEntities(Allocator.Temp))

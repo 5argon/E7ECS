@@ -68,6 +68,7 @@ public abstract class PurifierSystem : JobComponentSystem
         public void Execute(ArchetypeChunk ac, int i)
         {
             var na = ac.GetNativeArray(entiType);
+            //Debug.Log($"Cleaning {na.Length} {typeof(T).Name}");
             for (int j = 0; j < na.Length; j++)
             {
                 ecb.SetComponent<T>(i, na[j], default);
@@ -96,6 +97,7 @@ public abstract class PurifierSystem : JobComponentSystem
         public void Execute(ArchetypeChunk ac, int i)
         {
             var na = ac.GetNativeArray(entiType);
+            //Debug.Log($"Cleaning {na.Length} {typeof(T).Name}");
             for (int j = 0; j < na.Length; j++)
             {
                 ecb.SetSharedComponent<T>(i, na[j], default);
@@ -124,6 +126,7 @@ public abstract class PurifierSystem : JobComponentSystem
         public void Execute(ArchetypeChunk ac, int i)
         {
             var na = ac.GetNativeArray(entiType);
+            //Debug.Log($"Removing {na.Length} {typeof(T).Name}");
             for (int j = 0; j < na.Length; j++)
             {
                 ecb.RemoveComponent<T>(i, na[j]);
