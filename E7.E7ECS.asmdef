@@ -5,6 +5,9 @@
         "Unity.Entities",
         "Unity.Burst",
         "Unity.Entities.Hybrid",
+        "Unity.Transforms.Hybrid",        
+        "Unity.Rendering.Hybrid",
+        "Unity.Transforms",
         "Unity.Mathematics"
     ],
     "optionalUnityReferences": [],
