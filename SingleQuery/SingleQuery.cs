@@ -44,6 +44,8 @@ namespace E7.ECS
         /// </summary>
         public bool Injected => ComponentGroupLength > 0;
 
+        public bool Any => NativeArrayOfChunk.Any;
+
         /// <summary>
         /// Very lazy method and only works in the main thread.
         /// </summary>
@@ -106,6 +108,7 @@ namespace E7.ECS
             }
 
             public void Dispose() => aca.Dispose();
+            public bool Any => cachedFirstChunk.Length != 0;
             public bool IsCreated => aca.IsCreated;
             public bool FirstChunkChanged => ChunkChanged(0);
             public bool ChunkChanged(int i) => aca[i].DidAddOrChange(acct, lastSystemVersionKeep);

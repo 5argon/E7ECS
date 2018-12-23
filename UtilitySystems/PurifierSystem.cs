@@ -76,6 +76,11 @@ public abstract class PurifierSystem : JobComponentSystem
         }
     }
 
+    /// <summary>
+    /// ISharedComponentData with default value is special.
+    /// It does not generates `GameObject` dependency, yet the type is still in the Archetype.
+    /// "Cleaning" them will do just that. Preserving archetype but does not care about its value.
+    /// </summary>
     protected void CleanShared<T>() where T : struct, ISharedComponentData 
     {
         var cg = GetComponentGroup(ComponentType.Create<T>());

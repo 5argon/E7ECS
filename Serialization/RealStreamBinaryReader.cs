@@ -3,6 +3,8 @@
 using System;
 using System.IO;
 using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine;
+using System.Linq;
 
 namespace E7.ECS
 {
@@ -32,6 +34,8 @@ namespace E7.ECS
                 while (remaining != 0)
                 {
                     int read = stream.Read(buffer, 0, Math.Min(remaining, bufferSize));
+                    // Debug.Log($"Read {read} bytes");
+                    // Debug.Log($"Content : { string.Join("|", buffer.Select(x => x.ToString()))}");
                     remaining -= read;
                     UnsafeUtility.MemCpy(data, fixedBuffer, read);
                     data = (byte*)data + read;
