@@ -1,13 +1,15 @@
 {
     "name": "E7.E7ECS",
     "references": [
+        "Unity.Burst",
         "Unity.Collections",
         "Unity.Entities",
         "Unity.Entities.Hybrid",
         "Unity.Transforms.Hybrid",
         "Unity.Rendering.Hybrid",
         "Unity.Transforms",
-        "Unity.Mathematics"
+        "Unity.Mathematics",
+        "Unity.Jobs"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],
