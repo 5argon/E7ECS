@@ -19,8 +19,9 @@ namespace E7.ECS.AttachGameObject
     /// The matrix is decoded very simply, you must not have projections encoded in the matrix.
     /// TODO : Currently decode only position and scale..
     /// </summary>
-    [UpdateAfter(typeof(EndFrameTransformSystem))]
     [ExecuteInEditMode]
+    [UpdateInGroup(typeof(TransformSystemGroup))]
+    [UpdateAfter(typeof(EndFrameLocalToParentSystem))]
     public class CopyLTWToGameObjectSystem : JobComponentSystem
     {
         [BurstCompile]
@@ -29,7 +30,8 @@ namespace E7.ECS.AttachGameObject
             [ReadOnly] public ComponentDataFromEntity<LocalToWorld> ltw;
 
             [ReadOnly]
-            public EntityArray entities;
+            [DeallocateOnJobCompletion]
+            public NativeArray<Entity> entities;
 
             public void Execute(int index, TransformAccess transform)
             {
@@ -55,7 +57,7 @@ namespace E7.ECS.AttachGameObject
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             var transforms = m_TransformGroup.GetTransformAccessArray();
-            var entities = m_TransformGroup.GetEntityArray();
+            var entities = m_TransformGroup.ToEntityArray(Allocator.TempJob);
 
             var copyTransformsJob = new CopyTransforms
             {

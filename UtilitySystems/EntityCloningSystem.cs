@@ -13,7 +13,7 @@ namespace E7.ECS
         ComponentGroup clonedGroup;
         protected override void OnCreateManager()
         {
-            clonedGroup = GetComponentGroup(ComponentType.Create<Cloned>());
+            clonedGroup = GetComponentGroup(ComponentType.ReadOnly<Cloned>());
         }
 
         /// <summary>
@@ -39,6 +39,7 @@ namespace E7.ECS
             destEcs.CleanCloned();
             destinationWorld.DestroyManager(destEcs);
         }
+        
 
         internal void CleanCloned()
         {

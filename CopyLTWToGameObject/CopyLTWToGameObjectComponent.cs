@@ -2,7 +2,7 @@ using Unity.Entities;
 
 namespace E7.ECS.AttachGameObject
 {
-    public class CopyLTWToGameObjectComponent : ComponentDataWrapper<CopyLTWToGameObject>
+    public class CopyLTWToGameObjectComponent : ComponentDataProxy<CopyLTWToGameObject>
     {
     }
 }

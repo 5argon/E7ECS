@@ -7,20 +7,31 @@ using Unity.Jobs;
 namespace E7.ECS
 {
     [UpdateBefore(typeof(DestroyMessageSystem))]
-    public abstract class ReactiveCS<ReactiveGroup> : JobComponentSystem
-    where ReactiveGroup : struct, IMessageGroup
+    public abstract class ReactiveCS<MESSAGEGROUP> : JobComponentSystem
+    where MESSAGEGROUP : struct, IMessageGroup
     {
+        ComponentGroup messageGroup;
+        protected override void OnCreateManager()
+        {
+            messageGroup = GetComponentGroup(
+                ComponentType.ReadOnly<MESSAGEGROUP>(),
+                ComponentType.ReadOnly<DestroyMessageSystem.MessageEntity>()
+            );
+        }
+
         protected virtual void OnBeforeAllMessages() { }
         protected virtual JobHandle OnAfterAllMessages(JobHandle inputDeps) => inputDeps;
 
         protected abstract void OnReaction();
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            OnBeforeAllMessages();
-            for (int i = 0; i < InjectedReactivesInGroup.Entities.Length; i++)
+            using (var na = messageGroup.ToEntityArray(Allocator.Temp))
             {
-                iteratingEntity = InjectedReactivesInGroup.Entities[i];
-                OnReaction();
+                for (int i = 0; i < na.Length; i++)
+                {
+                    iteratingEntity = na[i];
+                    OnReaction();
+                }
             }
             return OnAfterAllMessages(inputDeps);
         }
@@ -43,22 +54,5 @@ namespace E7.ECS
             reactiveComponent = default;
             return false;
         }
-        /// <summary>
-        /// Captures reactive entities ready to be destroy after the task.
-        /// </summary>
-        protected struct ReactiveInjectGroup : IMessageInjectGroup<ReactiveGroup>
-        {
-            [ReadOnly] public ComponentDataArray<ReactiveGroup> reactiveGroups;
-            [ReadOnly] public ComponentDataArray<DestroyMessageSystem.MessageEntity> reactiveEntityTag;
-            public EntityArray entities;
-            public readonly int Length;
-
-            public ComponentDataArray<ReactiveGroup> MessageGroups => reactiveGroups;
-            public ComponentDataArray<DestroyMessageSystem.MessageEntity> MessageEntity => reactiveEntityTag;
-            public EntityArray Entities => entities;
-        }
-        [Inject] private protected ReactiveInjectGroup injectedReactivesInGroup;
-
-        private protected ReactiveInjectGroup InjectedReactivesInGroup => injectedReactivesInGroup;
     }
 }

@@ -10,7 +10,7 @@ namespace E7.ECS
     /// Requires registering with the system on OnCreateManager.
     /// You can take it to the job after some ceremonies.
     /// </summary>
-    public struct SingleQueryRW<D> : IECSQuery, IDisposable
+    public struct SingleQueryRW<D> : IDisposable
     where D : struct, IComponentData
     {
         [NativeSetClassTypeToNullOnSchedule] private ComponentGroup cg;
@@ -46,7 +46,16 @@ namespace E7.ECS
         /// <summary>
         /// Very lazy method and only works in the main thread.
         /// </summary>
-        public Entity FirstEntity => cg.GetEntityArray()[0];
+        public Entity FirstEntity
+        {
+            get
+            {
+                using (var ea = cg.ToEntityArray(Allocator.Temp))
+                {
+                    return ea[0];
+                }
+            }
+        }
 
         /// <summary>
         /// Prepare() in the main thread needed.
@@ -127,7 +136,7 @@ namespace E7.ECS
             public void Dispose() => aca.Dispose();
             public bool IsCreated => aca.IsCreated;
             public bool FirstChunkChanged => ChunkChanged(0);
-            public bool ChunkChanged(int i) => aca[i].DidAddOrChange(acct, lastSystemVersionKeep);
+            public bool ChunkChanged(int i) => aca[i].DidChange(acct, lastSystemVersionKeep);
         }
 
         /// <summary>
@@ -166,7 +175,7 @@ namespace E7.ECS
         /// <summary>
         /// Allows stunt flying in OnCreateManager.
         /// </summary>
-        public static implicit operator ComponentType(SingleQueryRW<D> s) => ComponentType.Create<D>();
+        public static implicit operator ComponentType(SingleQueryRW<D> s) => ComponentType.ReadWrite<D>();
     }
 
 }

@@ -2,6 +2,7 @@ using Unity.Entities;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Collections;
 
 namespace E7.ECS
 {
@@ -33,7 +34,14 @@ namespace E7.ECS
             }
         }
 
-        public EntityArray GetEntityArray() => cg.GetEntityArray();
+        /// <summary>
+        /// Dispose the array too!!
+        /// </summary>
+        public NativeArray<Entity> GetEntityArray(Allocator allocator)
+        {
+            return cg.ToEntityArray(allocator);
+        }
+        
         public bool Injected => Query.CalculateLength() > 0;
     }
 

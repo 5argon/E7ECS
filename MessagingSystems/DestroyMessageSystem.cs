@@ -1,5 +1,3 @@
-#define I_AM_WORRIED_ABOUT_EXECEPTION_PERFORMANCE
-
 using Unity.Entities;
 using Unity.Collections;
 using Unity.Jobs;
@@ -8,6 +6,9 @@ using UnityEngine.Jobs;
 
 namespace E7.ECS
 {
+    /// <summary>
+    /// Any message user should explicitly specify that they run BEFORE this system.
+    /// </summary>
     public class DestroyMessageSystem : ComponentSystem
     {
         public struct MessageEntity : IComponentData { }
@@ -15,7 +16,7 @@ namespace E7.ECS
         ComponentGroup cg;
         protected override void OnCreateManager()
         {
-            cg = GetComponentGroup(ComponentType.Create<MessageEntity>());
+            cg = GetComponentGroup(ComponentType.ReadOnly<MessageEntity>());
         }
 
         protected override void OnUpdate()

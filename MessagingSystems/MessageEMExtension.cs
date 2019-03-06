@@ -6,21 +6,6 @@ namespace E7.ECS
     public static class MessageEMExtension
     {
         /// <summary>
-        /// If you just loop and destroy each one in EntityArray without a command buffer, it will cause problems mid-loop!
-        /// </summary>
-        public static void DestroyAllInEntityArray(this EntityManager em, EntityArray ea)
-        {
-            using (var na = new NativeArray<Entity>(ea.Length, Allocator.Temp))
-            {
-                ea.CopyTo(na, 0);
-                for (int i = 0; i < na.Length; i++)
-                {
-                    em.DestroyEntity(na[i]);
-                }
-            }
-        }
-
-        /// <summary>
         /// Now this supports zero-sized component.
         /// </summary>
         public static void UpsertComponentData<T>(this EntityManager em, Entity entity) where T : struct, IComponentData
@@ -92,4 +77,5 @@ namespace E7.ECS
             ecb.AddComponentData<DestroyMessageSystem.MessageEntity>(e, default);
         }
     }
+
 }

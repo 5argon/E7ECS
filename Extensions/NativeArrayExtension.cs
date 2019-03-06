@@ -7,12 +7,9 @@ using System.Collections.Generic;
 
 namespace E7.ECS
 {
-    public static class ComponentDataArrayExtension
+    public static class NativeArrayExtension
     {
-        /// <summary>
-        /// Like `EntityArray.ToArray` but for CDA.
-        /// </summary>
-        public static List<T> CopyToList<T>(this ComponentDataArray<T> cda) where T : struct, IComponentData
+        public static List<T> CopyToList<T>(this NativeArray<T> cda) where T : struct, IComponentData
         {
             using (var na = new NativeArray<T>(cda.Length, Allocator.Temp))
             {
@@ -22,10 +19,7 @@ namespace E7.ECS
             }
         }
 
-        /// <summary>
-        /// Like `EntityArray.ToArray` but for CDA.
-        /// </summary>
-        public static List<T> CopyToList<T>(this ComponentDataArray<T> cda, IComparer<T> sorting) where T : struct, IComponentData
+        public static List<T> CopyToList<T>(this NativeArray<T> cda, IComparer<T> sorting) where T : struct, IComponentData
         {
             var list = CopyToList<T>(cda);
             list.Sort(sorting);

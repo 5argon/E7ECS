@@ -1,5 +1,5 @@
 {
-    "name": "E7.E7Unity.Tests",
+    "name": "E7.E7ECS.Tests",
     "references": [
         "E7.E7ECS"
     ],

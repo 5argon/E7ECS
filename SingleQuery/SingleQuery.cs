@@ -11,7 +11,7 @@ namespace E7.ECS
     /// Requires registering with the system on OnCreateManager.
     /// You can take it to the job after some ceremonies.
     /// </summary>
-    public struct SingleQuery<D> : IECSQuery, IDisposable
+    public struct SingleQuery<D> : IDisposable
     where D : struct, IComponentData
     {
         [NativeSetClassTypeToNullOnSchedule] private ComponentGroup cg;
@@ -49,7 +49,16 @@ namespace E7.ECS
         /// <summary>
         /// Very lazy method and only works in the main thread.
         /// </summary>
-        public Entity FirstEntity => cg.GetEntityArray()[0];
+        public Entity FirstEntity
+        {
+            get
+            {
+                using (var ea = cg.ToEntityArray(Allocator.Temp))
+                {
+                    return ea[0];
+                }
+            }
+        }
 
         /// <summary>
         /// Prepare() in the main thread needed.
@@ -111,7 +120,7 @@ namespace E7.ECS
             public bool Any => cachedFirstChunk.Length != 0;
             public bool IsCreated => aca.IsCreated;
             public bool FirstChunkChanged => ChunkChanged(0);
-            public bool ChunkChanged(int i) => aca[i].DidAddOrChange(acct, lastSystemVersionKeep);
+            public bool ChunkChanged(int i) => aca[i].DidChange(acct, lastSystemVersionKeep);
         }
 
         /// <summary>
@@ -138,7 +147,7 @@ namespace E7.ECS
         /// <summary>
         /// When you sure your single component would all be together in one chunk you can iterate through them all with this.
         /// It can throw to let you know if that is not the case.
-        /// /// </summary>
+        /// </summary>
         public NativeArray<D> FirstChunk
         {
             get
