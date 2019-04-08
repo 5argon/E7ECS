@@ -157,7 +157,7 @@ namespace E7.ECS
         /// When you sure your single component would all be together in one chunk you can iterate through them all with this.
         /// It can throw to let you know if that is not the case.
         /// The chunk is considered written immediately.
-        /// /// </summary>
+        /// </summary>
         public NativeArray<D> FirstChunk
         {
             get

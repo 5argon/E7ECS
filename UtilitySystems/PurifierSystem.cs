@@ -7,73 +7,21 @@ using System.Collections.Generic;
 /// <summary>
 /// Remove or set to default components of ALL entities in the world at once.
 /// It will work only on entities with that component.
-/// Subclass and call a series of Clean/Remove on your `OnPurification`.
+/// Subclass and call a series of Clean/Remove on your `OnUpdate`.
 /// 
 /// When you are going to serialize a world for example,
 /// put a subclass of this system in that world and run Update
 /// once to clean up unwanted components.
-/// TODO : Wait for "chunk operation" API.
+/// 
+/// The clean or remove is based on whole-chunk operations. No iteration made.
 /// </summary>
-public abstract class PurifierSystem : JobComponentSystem
+public abstract class PurifierSystem : ComponentSystem
 {
-    EntityCommandBuffer ecb;
-    JobHandle input;
-
-    List<JobHandle> jobHandles;
-    List<EntityCommandBuffer> ecbs;
-    protected override void OnCreateManager()
-    {
-        jobHandles = new List<JobHandle>();
-        ecbs = new List<EntityCommandBuffer>();
-    }
-
-    protected override JobHandle OnUpdate(JobHandle inputDeps)
-    {
-        input = inputDeps;
-        ecbs.Clear();
-        jobHandles.Clear();
-        OnPurification();
-        foreach (var jh in jobHandles)
-        {
-            jh.Complete();
-        }
-        foreach (var ecb in ecbs)
-        {
-            ecb.Playback(EntityManager);
-            ecb.Dispose();
-        }
-        return inputDeps;
-    }
-
-    protected abstract void OnPurification();
-
     protected void Clean<T>() where T : struct, IComponentData
     {
-        var cg = GetComponentGroup(ComponentType.ReadOnly<T>());
-        var ecb = new EntityCommandBuffer(Allocator.TempJob);
-        ecbs.Add(ecb);
-        var job = new CleanJob<T>
-        {
-            entiType = GetArchetypeChunkEntityType(),
-            ecb = ecb.ToConcurrent(),
-        }
-        .Schedule(cg, input);
-        jobHandles.Add(job);
-    }
-
-    struct CleanJob<T> : IJobChunk where T : struct, IComponentData
-    {
-        [ReadOnly] public ArchetypeChunkEntityType entiType;
-        public EntityCommandBuffer.Concurrent ecb;
-        public void Execute(ArchetypeChunk ac, int chunkIndex, int firstEntityIndex)
-        {
-            var na = ac.GetNativeArray(entiType);
-            //Debug.Log($"Cleaning {na.Length} {typeof(T).Name}");
-            for (int j = 0; j < na.Length; j++)
-            {
-                ecb.SetComponent<T>(chunkIndex, na[j], default);
-            }
-        }
+        var cg = Entities.WithAll<T>().ToComponentGroup();
+        EntityManager.RemoveComponent(cg, ComponentType.ReadOnly<T>());
+        EntityManager.AddComponent(cg, ComponentType.ReadOnly<T>());
     }
 
     /// <summary>
@@ -83,59 +31,14 @@ public abstract class PurifierSystem : JobComponentSystem
     /// </summary>
     protected void CleanShared<T>() where T : struct, ISharedComponentData 
     {
-        var cg = GetComponentGroup(ComponentType.ReadOnly<T>());
-        var ecb = new EntityCommandBuffer(Allocator.TempJob);
-        ecbs.Add(ecb);
-        var job = new CleanSharedJob<T>
-        {
-            entiType = GetArchetypeChunkEntityType(),
-            ecb = ecb.ToConcurrent(),
-        }
-        .Schedule(cg, input);
-        jobHandles.Add(job);
-    }
-
-    struct CleanSharedJob<T> : IJobChunk where T : struct, ISharedComponentData
-    {
-        [ReadOnly] public ArchetypeChunkEntityType entiType;
-        public EntityCommandBuffer.Concurrent ecb;
-        public void Execute(ArchetypeChunk ac, int chunkIndex, int firstEntityIndex)
-        {
-            var na = ac.GetNativeArray(entiType);
-            //Debug.Log($"Cleaning {na.Length} {typeof(T).Name}");
-            for (int j = 0; j < na.Length; j++)
-            {
-                ecb.SetSharedComponent<T>(chunkIndex, na[j], default);
-            }
-        }
+        var cg = Entities.WithAll<T>().ToComponentGroup();
+        EntityManager.RemoveComponent(cg, ComponentType.ReadOnly<T>());
+        EntityManager.AddSharedComponentData(cg, default(T));
     }
 
     protected void Remove<T>() where T : struct
     {
-        var cg = GetComponentGroup(ComponentType.ReadWrite<T>());
-        var ecb = new EntityCommandBuffer(Allocator.TempJob);
-        ecbs.Add(ecb);
-        var job = new RemoveJob<T>
-        {
-            entiType = GetArchetypeChunkEntityType(),
-            ecb = ecb.ToConcurrent(),
-        }
-        .Schedule(cg, input);
-        jobHandles.Add(job);
-    }
-
-    struct RemoveJob<T> : IJobChunk where T : struct
-    {
-        [ReadOnly] public ArchetypeChunkEntityType entiType;
-        public EntityCommandBuffer.Concurrent ecb;
-        public void Execute(ArchetypeChunk ac, int chunkIndex, int firstEntityIndex)
-        {
-            var na = ac.GetNativeArray(entiType);
-            //Debug.Log($"Removing {na.Length} {typeof(T).Name}");
-            for (int j = 0; j < na.Length; j++)
-            {
-                ecb.RemoveComponent<T>(chunkIndex, na[j]);
-            }
-        }
+        var cg = Entities.WithAll<T>().ToComponentGroup();
+        EntityManager.RemoveComponent(cg, ComponentType.ReadOnly<T>());
     }
 }

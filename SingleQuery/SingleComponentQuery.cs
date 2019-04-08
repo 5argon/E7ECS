@@ -3,11 +3,12 @@ using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using System.Collections.Generic;
 using Unity.Collections;
+using System;
 
 namespace E7.ECS
 {
     /// <summary>
-    /// Tons of to be deprecated methods!
+    /// Get a single or singleton managed component!
     /// </summary>
     public struct SingleComponentQuery<D>
     where D : Component
@@ -23,11 +24,21 @@ namespace E7.ECS
             system = cs;
         }
 
-        public ComponentArray<D> GetComponentArray() => cg.GetComponentArray<D>();
+        public D First 
+        {
+            get{
+                var ca = cg.ToComponentArray<D>();
+                if( ca.Length != 1)
+                {
+                    throw new Exception($"You don't use {nameof(SingleComponentQuery<D>)} when you have {ca.Length} {typeof(D).Name}!");
+                }
+                return ca[0];
+            }
+        }
 
         public IEnumerable<D> GetComponentArrayIterator()
         {
-            var ca = cg.GetComponentArray<D>();
+            var ca = cg.ToComponentArray<D>();
             for (int i = 0; i < ca.Length; i++)
             {
                 yield return ca[i];

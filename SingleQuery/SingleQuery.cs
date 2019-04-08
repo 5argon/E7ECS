@@ -2,6 +2,7 @@ using Unity.Entities;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Collections;
 using System;
+using Unity.Jobs;
 
 namespace E7.ECS
 {
@@ -64,6 +65,19 @@ namespace E7.ECS
         /// Prepare() in the main thread needed.
         /// </summary>
         public bool FirstChunkUnchanged => !NativeArrayOfChunk.FirstChunkChanged;
+
+        /// <summary>
+        /// Equivalent to multiple chunk iteration ceremonies that are needed in the main thread. Do it before sending itself to the job.
+        /// If you Prepare to use in the main thread and not sending to the job, you have to Dispose manually.
+        /// </summary>
+        public SingleQuery<D> Prepare(out JobHandle prepareJh)
+        {
+            var acct = GetACCT();
+            var aca = cg.CreateArchetypeChunkArray(Allocator.TempJob, out JobHandle pj);
+            NativeArrayOfChunk = new ArchetypeChunkIterator { aca = aca, acct = acct, lastSystemVersionKeep = system.LastSystemVersion };
+            prepareJh = pj;
+            return this;
+        }
 
         /// <summary>
         /// Equivalent to multiple chunk iteration ceremonies that are needed in the main thread. Do it before sending itself to the job.

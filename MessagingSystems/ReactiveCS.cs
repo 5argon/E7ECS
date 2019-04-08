@@ -6,6 +6,13 @@ using Unity.Jobs;
 
 namespace E7.ECS
 {
+    /// <summary>
+    /// It will iterate through all messages received so far this frame for you,
+    /// and call <see cref="OnReaction"> for each message.
+    /// 
+    /// While in <see cref="OnReaction">, you use <see cref="ReactsTo{T}"> or <see cref="ReactsTo{T}(out T)"> to check
+    /// the current iterating message and do things.
+    /// </summary>
     [UpdateBefore(typeof(DestroyMessageSystem))]
     public abstract class ReactiveCS<MESSAGEGROUP> : JobComponentSystem
     where MESSAGEGROUP : struct, IMessageGroup
