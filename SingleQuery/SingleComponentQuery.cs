@@ -13,12 +13,12 @@ namespace E7.ECS
     public struct SingleComponentQuery<D>
     where D : Component
     {
-        [NativeSetClassTypeToNullOnSchedule] private ComponentGroup cg;
+        [NativeSetClassTypeToNullOnSchedule] private EntityQuery cg;
         [NativeSetClassTypeToNullOnSchedule] private ComponentSystemBase system;
-        public ComponentGroup Query { get => cg; set => cg = value; }
+        public EntityQuery Query { get => cg; set => cg = value; }
 
         public static implicit operator ComponentType(SingleComponentQuery<D> s) => ComponentType.ReadOnly<D>();
-        public void Register(ComponentGroup cg, ComponentSystemBase cs)
+        public void Register(EntityQuery cg, ComponentSystemBase cs)
         {
             Query = cg;
             system = cs;

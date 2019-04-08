@@ -10,10 +10,10 @@ namespace E7.ECS
     {
         internal struct Cloned : ISystemStateComponentData { }
 
-        ComponentGroup clonedGroup;
+        EntityQuery clonedGroup;
         protected override void OnCreateManager()
         {
-            clonedGroup = GetComponentGroup(ComponentType.ReadOnly<Cloned>());
+            clonedGroup = GetEntityQuery(ComponentType.ReadOnly<Cloned>());
         }
 
         /// <summary>
@@ -22,7 +22,7 @@ namespace E7.ECS
         /// </summary>
         public void CloneTo(World destinationWorld)
         {
-            EntityManager destinationEntityManager = destinationWorld.GetExistingManager<EntityManager>();
+            EntityManager destinationEntityManager = destinationWorld.EntityManager;
             using (var ea = EntityManager.GetAllEntities(Allocator.Temp))
             {
                 for (int i = 0; i < ea.Length; i++)
@@ -35,9 +35,9 @@ namespace E7.ECS
             {
                 destinationEntityManager.MoveEntitiesFrom(EntityManager, clonedGroup, remap);
             }
-            var destEcs = destinationWorld.CreateManager<EntityCloningSystem>();
+            var destEcs = destinationWorld.CreateSystem<EntityCloningSystem>();
             destEcs.CleanCloned();
-            destinationWorld.DestroyManager(destEcs);
+            destinationWorld.DestroySystem(destEcs);
         }
         
 

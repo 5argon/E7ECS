@@ -13,10 +13,10 @@ namespace E7.ECS
     {
         public struct MessageEntity : IComponentData { }
 
-        ComponentGroup cg;
+        EntityQuery cg;
         protected override void OnCreateManager()
         {
-            cg = GetComponentGroup(ComponentType.ReadOnly<MessageEntity>());
+            cg = GetEntityQuery(ComponentType.ReadOnly<MessageEntity>());
         }
 
         protected override void OnUpdate()

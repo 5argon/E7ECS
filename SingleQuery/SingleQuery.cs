@@ -15,13 +15,13 @@ namespace E7.ECS
     public struct SingleQuery<D> : IDisposable
     where D : struct, IComponentData
     {
-        [NativeSetClassTypeToNullOnSchedule] private ComponentGroup cg;
+        [NativeSetClassTypeToNullOnSchedule] private EntityQuery cg;
         [NativeSetClassTypeToNullOnSchedule] private ComponentSystemBase system;
 
         /// <summary>
         /// Useful when you want to send it to IJobChunk
         /// </summary>
-        public ComponentGroup Query { get => cg; set => cg = value; }
+        public EntityQuery Query { get => cg; set => cg = value; }
 
         /// <summary>
         /// Used in IJobChunk
@@ -30,9 +30,9 @@ namespace E7.ECS
 
         /// <summary>
         /// Make itself known to the system's component groups.
-        /// Pattern in your OnCreateManager is like : sq.Register(GetComponentGroup(sq))
+        /// Pattern in your OnCreateManager is like : sq.Register(GetEntityQuery(sq))
         /// </summary>
-        public void Register(ComponentGroup cg, ComponentSystemBase cs)
+        public void Register(EntityQuery cg, ComponentSystemBase cs)
         {
             Query = cg;
             system = cs;

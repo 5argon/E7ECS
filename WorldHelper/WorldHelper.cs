@@ -35,11 +35,11 @@ namespace E7.ECS
             return (int)(math.ceil(exactSize / (float)multipleOf) * multipleOf);
         }
 
-        public static T LateInject<T>(this World world, T w) where T : ScriptBehaviourManager
+        public static T LateInject<T>(this World world, T w) where T : ComponentSystem
         {
             if (w == null)
             {
-                return world.GetOrCreateManager<T>();
+                return world.GetOrCreateSystem<T>();
             }
             else
             {
@@ -49,14 +49,14 @@ namespace E7.ECS
 
         public static void IncreaseVersion()
         {
-            World.Active.GetOrCreateManager<VersionBumperSystem>().BumpVersion();
+            World.Active.GetOrCreateSystem<VersionBumperSystem>().BumpVersion();
         }
 
         public static void CopyAllEntities(World fromWorld, World toWorld)
         {
-            var ecs = fromWorld.CreateManager<EntityCloningSystem>();
+            var ecs = fromWorld.CreateSystem<EntityCloningSystem>();
             ecs.CloneTo(toWorld);
-            fromWorld.DestroyManager(ecs);
+            fromWorld.DestroySystem(ecs);
         }
 
         public static World CreateWorld(string name, params Type[] systemTypes)
@@ -73,7 +73,7 @@ namespace E7.ECS
                 {
                     throw new ArgumentException($"Hawawa! This type {t.Name} is not a system!");
                 }
-                w.GetOrCreateManager(t);
+                w.GetOrCreateSystem(t);
             }
             return w;
         }
@@ -105,34 +105,6 @@ namespace E7.ECS
                 w.Dispose();
                 ScriptBehaviourUpdateOrder.SetPlayerLoop(PlayerLoop.GetDefaultPlayerLoop());
             }
-        }
-
-        static void DomainUnloadShutdown()
-        {
-            World.DisposeAllWorlds();
-
-            WordStorage.Instance.Dispose();
-            WordStorage.Instance = null;
-            ScriptBehaviourUpdateOrder.UpdatePlayerLoop(null);
-        }
-
-#if I_WANNA_CREATE_MY_OWN_WORLDS_BUT_GIVE_ME_THOSE_HOOKS
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-#endif
-        public static void RegisterHybridHooks()
-        {
-            var typeInTheCorrectAssembly = typeof(GameObjectArray);
-            var hybridHooks = new System.Type[]{
-                typeInTheCorrectAssembly.Assembly.GetType("Unity.Entities.GameObjectArrayInjectionHook"),
-                typeInTheCorrectAssembly.Assembly.GetType("Unity.Entities.TransformAccessArrayInjectionHook"),
-                typeInTheCorrectAssembly.Assembly.GetType("Unity.Entities.ComponentArrayInjectionHook"),
-            };
-            foreach (var hook in hybridHooks)
-            {
-                InjectionHookSupport.RegisterHook(System.Activator.CreateInstance(hook) as InjectionHook);
-            }
-
-            PlayerLoopManager.RegisterDomainUnload(DomainUnloadShutdown, 10000);
         }
     }
 }

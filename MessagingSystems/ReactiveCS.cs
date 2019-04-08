@@ -17,10 +17,10 @@ namespace E7.ECS
     public abstract class ReactiveCS<MESSAGEGROUP> : JobComponentSystem
     where MESSAGEGROUP : struct, IMessageGroup
     {
-        ComponentGroup messageGroup;
+        EntityQuery messageGroup;
         protected override void OnCreateManager()
         {
-            messageGroup = GetComponentGroup(
+            messageGroup = GetEntityQuery(
                 ComponentType.ReadOnly<MESSAGEGROUP>(),
                 ComponentType.ReadOnly<DestroyMessageSystem.MessageEntity>()
             );

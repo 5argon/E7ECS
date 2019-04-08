@@ -47,11 +47,11 @@ namespace E7.ECS.AttachGameObject
             }
         }
 
-        ComponentGroup m_TransformGroup;
+        EntityQuery m_TransformGroup;
 
         protected override void OnCreateManager()
         {
-            m_TransformGroup = GetComponentGroup(ComponentType.ReadOnly(typeof(CopyLTWToGameObject)), typeof(UnityEngine.Transform));
+            m_TransformGroup = GetEntityQuery(ComponentType.ReadOnly(typeof(CopyLTWToGameObject)), typeof(UnityEngine.Transform));
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)

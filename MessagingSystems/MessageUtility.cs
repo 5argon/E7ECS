@@ -7,7 +7,7 @@ namespace E7.ECS
     public static class MessageUtility
     {
         /// <summary>
-        /// You can manually inject only one type of message of the group with the output of this to GetComponentGroup
+        /// You can manually inject only one type of message of the group with the output of this to GetEntityQuery
         /// </summary>
         public static ComponentType[] GetMessageTypes<Message, MessageGroup>()
         where Message : struct, IMessage

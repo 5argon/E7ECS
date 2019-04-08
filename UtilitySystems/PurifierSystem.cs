@@ -19,7 +19,7 @@ public abstract class PurifierSystem : ComponentSystem
 {
     protected void Clean<T>() where T : struct, IComponentData
     {
-        var cg = Entities.WithAll<T>().ToComponentGroup();
+        var cg = Entities.WithAll<T>().ToEntityQuery();
         EntityManager.RemoveComponent(cg, ComponentType.ReadOnly<T>());
         EntityManager.AddComponent(cg, ComponentType.ReadOnly<T>());
     }
@@ -31,14 +31,14 @@ public abstract class PurifierSystem : ComponentSystem
     /// </summary>
     protected void CleanShared<T>() where T : struct, ISharedComponentData 
     {
-        var cg = Entities.WithAll<T>().ToComponentGroup();
+        var cg = Entities.WithAll<T>().ToEntityQuery();
         EntityManager.RemoveComponent(cg, ComponentType.ReadOnly<T>());
         EntityManager.AddSharedComponentData(cg, default(T));
     }
 
     protected void Remove<T>() where T : struct
     {
-        var cg = Entities.WithAll<T>().ToComponentGroup();
+        var cg = Entities.WithAll<T>().ToEntityQuery();
         EntityManager.RemoveComponent(cg, ComponentType.ReadOnly<T>());
     }
 }
