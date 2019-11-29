@@ -21,18 +21,6 @@ namespace E7.ECS
             return (int)(math.ceil(exactSize / (float)multipleOf) * multipleOf);
         }
 
-        public static T LateInject<T>(this World world, T w) where T : ComponentSystem
-        {
-            if (w == null)
-            {
-                return world.GetOrCreateSystem<T>();
-            }
-            else
-            {
-                return w;
-            }
-        }
-
         public static void IncreaseVersion()
         {
             World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<VersionBumperSystem>().BumpVersion();

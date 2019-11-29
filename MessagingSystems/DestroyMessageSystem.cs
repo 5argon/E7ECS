@@ -7,8 +7,9 @@ using UnityEngine.Jobs;
 namespace E7.ECS
 {
     /// <summary>
-    /// Any message user should explicitly specify that they run BEFORE this system.
+    /// Message will be destroyed all at <see cref="InitializationSystemGroup">
     /// </summary>
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
     public class DestroyMessageSystem : ComponentSystem
     {
         public struct MessageEntity : IComponentData { }

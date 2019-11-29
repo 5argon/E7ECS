@@ -22,6 +22,8 @@ namespace E7.ECS
         {
             Query = cg;
             system = cs;
+            //For managed component, it adds a hard update requirement.
+            cs.RequireForUpdate(cg);
         }
 
         public D First 
