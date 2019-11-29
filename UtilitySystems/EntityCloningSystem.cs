@@ -31,7 +31,7 @@ namespace E7.ECS
                     EntityManager.AddComponentData(cloned, new Cloned());
                 }
             }
-            using (var remap = new NativeArray<EntityRemapUtility.EntityRemapInfo>(clonedGroup.CalculateLength(), Allocator.TempJob))
+            using (var remap = new NativeArray<EntityRemapUtility.EntityRemapInfo>(clonedGroup.CalculateEntityCount(), Allocator.TempJob))
             {
                 destinationEntityManager.MoveEntitiesFrom(EntityManager, clonedGroup, remap);
             }

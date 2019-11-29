@@ -38,7 +38,7 @@ namespace E7.ECS
             system = cs;
         }
 
-        public int ComponentGroupLength => Query.CalculateLength();
+        public int ComponentGroupLength => Query.CalculateEntityCount();
 
         /// <summary>
         /// Only works in the main thread as it calculate component group's length

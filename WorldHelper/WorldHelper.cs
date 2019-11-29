@@ -1,22 +1,8 @@
-﻿#define I_WANNA_CREATE_MY_OWN_WORLDS_BUT_GIVE_ME_THOSE_HOOKS
-
-using Unity.Entities;
-using Unity.Collections;
-using Unity.Jobs;
-using UnityEngine;
-using UnityEngine.Experimental.PlayerLoop;
-using System.Collections.Generic;
-using UnityEngine.Jobs;
-using Unity.Transforms;
-using System.Reflection;
+﻿using Unity.Entities;
 using System;
 using System.Linq;
 using Unity.Mathematics;
-using UnityEngine.Experimental.LowLevel;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
+using UnityEngine.LowLevel;
 
 namespace E7.ECS
 {
@@ -49,7 +35,7 @@ namespace E7.ECS
 
         public static void IncreaseVersion()
         {
-            World.Active.GetOrCreateSystem<VersionBumperSystem>().BumpVersion();
+            World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<VersionBumperSystem>().BumpVersion();
         }
 
         public static void CopyAllEntities(World fromWorld, World toWorld)
@@ -85,7 +71,7 @@ namespace E7.ECS
         {
             if (w != null)
             {
-                World.Active = w;
+                World.DefaultGameObjectInjectionWorld = w;
                 ScriptBehaviourUpdateOrder.UpdatePlayerLoop(w);
             }
             else
@@ -101,7 +87,7 @@ namespace E7.ECS
         {
             if (w != null)
             {
-                World.Active = null;
+                World.DefaultGameObjectInjectionWorld = null;
                 w.Dispose();
                 ScriptBehaviourUpdateOrder.SetPlayerLoop(PlayerLoop.GetDefaultPlayerLoop());
             }

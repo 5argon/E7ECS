@@ -53,7 +53,7 @@ namespace E7.ECS
             return cg.ToEntityArray(allocator);
         }
         
-        public bool Injected => Query.CalculateLength() > 0;
+        public bool Injected => Query.CalculateEntityCount() > 0;
     }
 
 }
